@@ -42,7 +42,7 @@ function App() {
           {/* MAIN CONTENT AREA */}
           <main className='flex-1 overflow-y-auto'> 
             <div className='p-8'> 
-              {/* Static View Switching */}
+              {/* View Switching */}
               {isSearching ? (
                 <SearchPage query={searchQuery} />
               ) : (

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, X } from 'lucide-react'; // Added X icon
+import { ChevronDown, X } from 'lucide-react'; 
 
 const SearchPage = ({ query, searchTriggered, searchResultCount }) => {
   const [recentSearches, setRecentSearches] = useState([]);
 
-  // Fetch history when bar is empty
   useEffect(() => {
     if (!query || query.trim() === "") {
       fetch('http://localhost:3000/api/search/recent')
@@ -14,7 +13,6 @@ const SearchPage = ({ query, searchTriggered, searchResultCount }) => {
     }
   }, [query]);
 
-  // --- NEW: DELETE FUNCTION ---
   const handleDelete = async (termToDelete) => {
     try {
       const response = await fetch(`http://localhost:3000/api/search/delete/${termToDelete}`, {
@@ -22,7 +20,7 @@ const SearchPage = ({ query, searchTriggered, searchResultCount }) => {
       });
 
       if (response.ok) {
-        // Remove the deleted term from the local state immediately
+        
         setRecentSearches(prev => prev.filter(term => term !== termToDelete));
       }
     } catch (err) {
@@ -30,12 +28,10 @@ const SearchPage = ({ query, searchTriggered, searchResultCount }) => {
     }
   };
 
-  // 1. If user is typing but hasn't pressed Enter yet -> BLANK PAGE
   if (query && !searchTriggered) {
     return <div className="min-h-[60vh] animate-pulse"></div>;
   }
 
-  // 2. If bar is empty -> Show TOP SEARCH HISTORY
   if (!query) {
     return (
       <div className="space-y-6">
@@ -47,7 +43,7 @@ const SearchPage = ({ query, searchTriggered, searchResultCount }) => {
                 <button className="px-3 py-1.5 border border-[#B794F4] rounded-l-lg text-xs text-[#7148D6] bg-white hover:bg-violet-50 transition-colors">
                   {tag}
                 </button>
-                {/* Delete button next to the tag */}
+                {/* Delete button */}
                 <button 
                   onClick={() => handleDelete(tag)}
                   className="px-2 py-1.75 border-y border-r border-[#B794F4] rounded-r-lg bg-white text-[#7148D6] hover:bg-red-50 hover:text-red-600 transition-colors"
@@ -63,7 +59,6 @@ const SearchPage = ({ query, searchTriggered, searchResultCount }) => {
     );
   }
 
-  // 3. Search submitted AND no results -> SORRY PAGE
   if (searchTriggered && searchResultCount === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
@@ -78,7 +73,6 @@ const SearchPage = ({ query, searchTriggered, searchResultCount }) => {
     );
   }
 
-  // 4. Results found
   return <div className="text-violet-700 font-bold">Showing results for: {query}</div>;
 };
 
