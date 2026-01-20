@@ -31,7 +31,7 @@ export default function LoginPage() {
 
     // Redirect to Home page
          setTimeout(() => {
-      window.location.href = "/homepage";
+      window.location.href = "/dashboard";
     }, 1500);
 
     } catch (err) {

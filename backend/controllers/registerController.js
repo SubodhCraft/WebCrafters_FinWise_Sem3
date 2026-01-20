@@ -52,16 +52,12 @@ const register = async (req, res) => {
             // securityAnswer3: hashedAnswer3,
         });
 
-        res.status(201).json({
+       res.status(201).json({
+            success: true,
             message: "User registered successfully",
-            user: {
-                id: newUser.id,
-                username: newUser.username,
-                email: newUser.email,
-                // role: newUser.role,
-                
-            },
+            userId: newUser.id,   
         });
+
 
     } catch (error) {
         console.error(error);

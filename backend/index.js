@@ -10,7 +10,7 @@ require("dotenv").config();
 
 // MIDDLEWARE (MUST COME FIRST)
 app.use(cors({
-  origin: "http://localhost:5175", // frontend port
+  origin: "http://localhost:5173", // frontend port
   credentials: true
 }));
 

@@ -4,12 +4,12 @@ const router = express.Router();
 const { register } = require("../controllers/registerController");
 const { login } = require("../controllers/loginController");
 const { getProfile, updateProfile, getAllUsers } = require("../controllers/userController");
-const authGuard = require("../helpers/authGuard");
+// const authGuard = require("../helpers/authGuard");
 
 router.post("/register", register);
 router.post("/login", login);
 
-router.get("/getAllUsers", authGuard, getAllUsers);
+// router.get("/getAllUsers", authGuard, getAllUsers);
 router.get("/getUserById/:id", getProfile);
 router.put("/updateUserById/:id", updateProfile);
 

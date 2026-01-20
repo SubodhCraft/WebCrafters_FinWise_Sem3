@@ -4,6 +4,11 @@ import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/Registration.jsx';
 import ForgotPasswordPage from './pages/ForgetPassword.jsx';
 import SecurityQuestions from './pages/SecurityQuestions.jsx';
+import Dashboard from './components/Dashboard/Dashboard.jsx';
+// import Home from './pages/Home.jsx';
+import Header from './components/Layout/Header.jsx';
+import Sidebar from './components/Layout/Sidebar.jsx';
+// import Footers from './components/Footers.jsx';
 // import AdminDashboard from './pages/AdminDashboard.jsx';
 // import EditUsers from './pages/Edit.jsx';
 // import HomePage from './pages/HomePage.jsx';
@@ -20,6 +25,8 @@ function App(){
         <Route path ="/register" element ={<RegisterPage/>}/>
         <Route path="/security-questions" element={<SecurityQuestions />} />
         <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+
         <Route path="*" element={<Navigate to="/LoginPage" replace />} />
         {/* <Route path="/admindashboard" element={<AdminDashboard/>} />
         <Route path="/editusers/:id" element={<EditUsers/>} /> */}
