@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
 const CalendarPage = () => {
+  // Local state for dates, event data, and modal visibility
   const [viewDate, setViewDate] = useState(new Date()); 
   const [events, setEvents] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // State for the Form
+  // State to hold new event input values
   const [formData, setFormData] = useState({
     event_name: '',
     amount: '',
@@ -16,7 +17,7 @@ const CalendarPage = () => {
 
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-  // Fetch from Database
+  // Get monthly summary from backend
   const fetchSummary = async () => {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth() + 1;
@@ -27,9 +28,10 @@ const CalendarPage = () => {
     } catch (err) { console.error(err); }
   };
 
+  // Refetch data when month changes
   useEffect(() => { fetchSummary(); }, [viewDate]);
 
-  // Handle Form Submission to Database
+  // Send form data to database
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -40,11 +42,12 @@ const CalendarPage = () => {
       });
       if (res.ok) {
         setIsModalOpen(false);
-        fetchSummary(); // Refresh UI with new database data
+        fetchSummary(); // Reload calendar data
       }
     } catch (err) { console.error(err); }
   };
 
+  // UI component for the income/expense card in each day
   const renderSummaryCard = (dayData) => {
     const income = parseFloat(dayData.income || 0);
     const expense = parseFloat(dayData.expense || 0);
@@ -68,6 +71,7 @@ const CalendarPage = () => {
     );
   };
 
+  // Logic to calculate dates for the grid
   const generateGrid = () => {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
@@ -89,20 +93,32 @@ const CalendarPage = () => {
             <h2 className="text-2xl font-bold text-[#8457D8]">
               {viewDate.toLocaleString('default', { month: 'long' })} {viewDate.getFullYear()}
             </h2>
+            {/* Month navigation buttons */}
             <div className="flex space-x-1.5">
               <button onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))} className="p-1 bg-[#8457D8] text-white rounded-full"><ChevronLeft size={16} /></button>
               <button onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))} className="p-1 bg-[#8457D8] text-white rounded-full"><ChevronRight size={16} /></button>
             </div>
           </div>
           
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center px-4 py-2 bg-[#8457D8] text-white font-medium rounded-xl hover:bg-opacity-90"
-          >
-            <Plus className="w-4 h-4 mr-1" /> Add Event
-          </button>
+          {/* Action buttons on the right */}
+          <div className="flex space-x-3">
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center px-4 py-2 bg-[#8457D8] text-white font-medium rounded-xl hover:bg-opacity-90"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Add Event
+            </button>
+
+            <button 
+              className="flex items-center px-4 py-2 bg-[#8457D8] text-white font-medium rounded-xl hover:bg-opacity-90"
+              onClick={() => alert("Graph view logic goes here")}
+            >
+              View Transaction in Graph
+            </button>
+          </div>
         </div>
 
+        {/* Weekly Header and Date Grid */}
         <div className="border border-[#EAEEFF] rounded-4xl overflow-hidden">
           <div className="grid grid-cols-7 bg-[#F8FAFF] border-b border-[#EAEEFF]">
             {daysOfWeek.map(day => <div key={day} className="py-4 text-center text-sm font-bold text-[#8457D8]">{day}</div>)}
@@ -124,7 +140,7 @@ const CalendarPage = () => {
         </div>
       </div>
 
-      {/* ADD EVENT MODAL */}
+      {/* Transaction Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-2xl w-96 shadow-xl border border-[#8457D8]">
