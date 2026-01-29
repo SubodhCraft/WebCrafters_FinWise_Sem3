@@ -318,3 +318,52 @@ exports.getGoalsSummary = async (req, res) => {
     });
   }
 };
+
+// Sync goal progress with transactions
+exports.syncGoalProgress = async (req, res) => {
+  try {
+    const goal = await Goal.findOne({
+      where: {
+        id: req.params.id,
+        userId: req.user.id
+      }
+    });
+
+    if (!goal) {
+      return res.status(404).json({
+        success: false,
+        message: 'Goal not found'
+      });
+    }
+
+    // Calculate actual amount from transactions
+    const transactions = await Transaction.findAll({
+      where: {
+        userId: req.user.id,
+        category: goal.category,
+        type: goal.type,
+        date: {
+          [Op.between]: [goal.startDate, goal.endDate]
+        }
+      }
+    });
+
+    const totalAmount = transactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+    await goal.update({ currentAmount: totalAmount });
+
+    res.status(200).json({
+      success: true,
+      message: 'Goal progress synced successfully',
+      data: goal.toJSON()
+    });
+  } catch (error) {
+    console.error('Sync goal error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to sync goal progress',
+      error: error.message
+    });
+  }
+};
+
+module.exports = exports;
