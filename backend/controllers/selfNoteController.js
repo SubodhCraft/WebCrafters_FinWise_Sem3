@@ -185,3 +185,40 @@ exports.updateSelfNote = async (req, res) => {
     });
   }
 };
+
+
+// Toggle pin status
+exports.togglePinSelfNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const note = await SelfNote.findOne({
+      where: { id, userId }
+    });
+
+    if (!note) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Self note not found' 
+      });
+    }
+
+    await note.update({
+      isPinned: !note.isPinned
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Self note ${note.isPinned ? 'pinned' : 'unpinned'} successfully`,
+      note
+    });
+  } catch (error) {
+    console.error('Error toggling pin status:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to toggle pin status',
+      error: error.message 
+    });
+  }
+};
