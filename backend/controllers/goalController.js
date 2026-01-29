@@ -139,3 +139,72 @@ exports.getGoalById = async (req, res) => {
     });
   }
 };
+// Update a goal
+exports.updateGoal = async (req, res) => {
+  try {
+    const goal = await Goal.findOne({
+      where: {
+        id: req.params.id,
+        userId: req.user.id
+      }
+    });
+
+    if (!goal) {
+      return res.status(404).json({
+        success: false,
+        message: 'Goal not found'
+      });
+    }
+
+    await goal.update(req.body);
+
+    res.status(200).json({
+      success: true,
+      message: 'Goal updated successfully',
+      data: goal.toJSON()
+    });
+  } catch (error) {
+    console.error('Update goal error:', error);
+    res.status(400).json({
+      success: false,
+      message: 'Failed to update goal',
+      error: error.message
+    });
+  }
+};
+
+// Update goal progress (current amount)
+exports.updateGoalProgress = async (req, res) => {
+  try {
+    const { currentAmount } = req.body;
+
+    const goal = await Goal.findOne({
+      where: {
+        id: req.params.id,
+        userId: req.user.id
+      }
+    });
+
+    if (!goal) {
+      return res.status(404).json({
+        success: false,
+        message: 'Goal not found'
+      });
+    }
+
+    await goal.update({ currentAmount });
+
+    res.status(200).json({
+      success: true,
+      message: 'Goal progress updated successfully',
+      data: goal.toJSON()
+    });
+  } catch (error) {
+    console.error('Update progress error:', error);
+    res.status(400).json({
+      success: false,
+      message: 'Failed to update goal progress',
+      error: error.message
+    });
+  }
+};
