@@ -1,4 +1,3 @@
-
 // import React from 'react'
 // import { LayoutDashboard, FileText, Calendar, Zap, File, Settings, LogOut } from 'lucide-react'; 
 // import FinwiseLogo from "../../assets/logo-finwise.png"; 
@@ -97,19 +96,32 @@
 // export default Sidebar
 
 
-
 import React from 'react';
-import { Home, TrendingUp, Wallet, CreditCard, PieChart, Settings, LogOut, ChevronRight } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Home, StickyNote, Calendar, Target, PieChart, Settings, LogOut, ChevronRight, Wallet, Shield } from 'lucide-react';
 
-const Sidebar = ({ activeTab, setActiveTab }) => {
+const Sidebar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAdmin = user.role === 'admin';
+
   const menuItems = [
-    { id: 'dashboard', icon: Home, label: 'Dashboard' },
-    { id: 'notes', icon: TrendingUp, label: 'Notes' },
-    { id: 'calender', icon: Wallet, label: 'Calender' },
-    { id: 'goals', icon: CreditCard, label: 'Goals' },
-    { id: 'analytics', icon: PieChart, label: 'Analytics' },
-    { id: 'settings', icon: Settings, label: 'Settings' },
+    { id: 'dashboard', path: '/dashboard', icon: Home, label: 'Dashboard' },
+    { id: 'notes', path: '/selfnotes', icon: StickyNote, label: 'Notes' },
+    { id: 'calendar', path: '/calendar', icon: Calendar, label: 'Calendar' },
+    { id: 'goals', path: '/goals', icon: Target, label: 'Goals' },
+    { id: 'analytics', path: '/analytics', icon: PieChart, label: 'Analytics' },
+    { id: 'settings', path: '/settings', icon: Settings, label: 'Settings' },
   ];
+
+  if (isAdmin) {
+    menuItems.push({ id: 'admin', path: '/admin', icon: Shield, label: 'Admin Panel' });
+  }
+
+  const handleNavigation = (path) => {
+    navigate(path);
+  };
 
   return (
     <div className="w-64 bg-gradient-to-b from-indigo-600 to-indigo-800 text-white h-screen fixed left-0 top-0 flex flex-col shadow-xl">
@@ -130,17 +142,16 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
       <nav className="flex-1 px-3 py-6 space-y-1">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          
+          const isActive = location.pathname === item.path;
+
           return (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group ${
-                isActive
+              onClick={() => handleNavigation(item.path)}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group ${isActive
                   ? 'bg-white text-indigo-600 shadow-lg'
                   : 'text-indigo-100 hover:bg-indigo-700 hover:text-white'
-              }`}
+                }`}
             >
               <div className="flex items-center space-x-3">
                 <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : 'text-indigo-200'}`} />
@@ -153,12 +164,6 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
       </nav>
 
       {/* Logout Section */}
-      <div className="p-4 border-t border-indigo-500">
-        <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-indigo-100 hover:bg-indigo-700 hover:text-white transition-all duration-200">
-          <LogOut className="w-5 h-5" />
-          <span className="font-medium">Logout</span>
-        </button>
-      </div>
     </div>
   );
 };
