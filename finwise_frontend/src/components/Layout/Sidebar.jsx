@@ -106,6 +106,14 @@ const Sidebar = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = user.role === 'admin';
 
+  const handleLogout = () => {
+    // Remove token and userId
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('user');
+    navigate('/LoginPage');
+  };
+
   const menuItems = [
     { id: 'dashboard', path: '/dashboard', icon: Home, label: 'Dashboard' },
     { id: 'notes', path: '/selfnotes', icon: StickyNote, label: 'Notes' },
@@ -164,6 +172,15 @@ const Sidebar = () => {
       </nav>
 
       {/* Logout Section */}
+      <div className="p-4 border-t border-indigo-500">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-indigo-100 hover:bg-indigo-700 hover:text-white transition-all duration-200"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="font-medium">Logout</span>
+        </button>
+      </div>
     </div>
   );
 };
