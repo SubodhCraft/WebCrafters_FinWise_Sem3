@@ -152,3 +152,41 @@ exports.getTransactionStats = async (req, res) => {
     });
   }
 };
+
+// Update transaction
+exports.updateTransaction = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const { type, category, amount, remarks, date } = req.body;
+
+    const transaction = await Transaction.findOne({
+      where: { id, userId }
+    });
+
+    if (!transaction) {
+      return res.status(404).json({
+        message: 'Transaction not found'
+      });
+    }
+
+    await transaction.update({
+      type: type || transaction.type,
+      category: category || transaction.category,
+      amount: amount ? parseFloat(amount) : transaction.amount,
+      remarks: remarks !== undefined ? remarks : transaction.remarks,
+      date: date ? new Date(date) : transaction.date
+    });
+
+    res.status(200).json({
+      message: 'Transaction updated successfully',
+      transaction
+    });
+  } catch (error) {
+    console.error('Error updating transaction:', error);
+    res.status(500).json({
+      message: 'Failed to update transaction',
+      error: error.message
+    });
+  }
+};
