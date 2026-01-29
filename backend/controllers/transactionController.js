@@ -44,3 +44,78 @@ exports.createTransaction = async (req, res) => {
     });
   }
 };
+
+// Get recent transactions (last 10)
+exports.getRecentTransactions = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const transactions = await Transaction.findAll({
+      where: { userId },
+      order: [['date', 'DESC'], ['createdAt', 'DESC']],
+      limit: 10
+    });
+
+    res.status(200).json({
+      transactions
+    });
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    res.status(500).json({
+      message: 'Failed to fetch transactions',
+      error: error.message
+    });
+  }
+};
+
+// Get all transactions with pagination and filters
+exports.getAllTransactions = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const {
+      page = 1,
+      limit = 20,
+      type,
+      category,
+      startDate,
+      endDate
+    } = req.query;
+
+    const offset = (page - 1) * limit;
+
+    // Build where clause
+    const whereClause = { userId };
+
+    if (type) whereClause.type = type;
+    if (category) whereClause.category = category;
+
+    if (startDate || endDate) {
+      whereClause.date = {};
+      if (startDate) whereClause.date[Op.gte] = new Date(startDate);
+      if (endDate) whereClause.date[Op.lte] = new Date(endDate);
+    }
+
+    const { count, rows } = await Transaction.findAndCountAll({
+      where: whereClause,
+      order: [['date', 'DESC'], ['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+
+    res.status(200).json({
+      transactions: rows,
+      pagination: {
+        total: count,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(count / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    res.status(500).json({
+      message: 'Failed to fetch transactions',
+      error: error.message
+    });
+  }
+};
