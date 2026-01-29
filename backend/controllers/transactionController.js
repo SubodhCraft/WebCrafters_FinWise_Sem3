@@ -119,3 +119,36 @@ exports.getAllTransactions = async (req, res) => {
     });
   }
 };
+
+
+// Get transaction statistics
+exports.getTransactionStats = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get total income
+    const totalIncome = await Transaction.sum('amount', {
+      where: { userId, type: 'income' }
+    }) || 0;
+
+    // Get total expenses
+    const totalExpenses = await Transaction.sum('amount', {
+      where: { userId, type: 'expense' }
+    }) || 0;
+
+    // Calculate balance
+    const balance = totalIncome - totalExpenses;
+
+    res.status(200).json({
+      balance: parseFloat(balance.toFixed(2)),
+      income: parseFloat(totalIncome.toFixed(2)),
+      expenses: parseFloat(totalExpenses.toFixed(2))
+    });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({
+      message: 'Failed to fetch statistics',
+      error: error.message
+    });
+  }
+};
