@@ -123,3 +123,30 @@ exports.updateCategory = async (req, res) => {
     });
   }
 };
+
+// Delete category (Admin only)
+exports.deleteCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const category = await Category.findByPk(id);
+
+    if (!category) {
+      return res.status(404).json({ 
+        message: 'Category not found' 
+      });
+    }
+
+    await category.destroy();
+
+    res.status(200).json({
+      message: 'Category deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    res.status(500).json({ 
+      message: 'Failed to delete category',
+      error: error.message 
+    });
+  }
+};
