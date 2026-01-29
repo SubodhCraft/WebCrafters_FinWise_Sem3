@@ -315,3 +315,122 @@ exports.getAnalyticsByCategory = async (req, res) => {
     });
   }
 };
+
+// Get monthly trends
+exports.getMonthlyTrends = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { months = 6 } = req.query;
+
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - parseInt(months));
+
+    const transactions = await Transaction.findAll({
+      where: {
+        userId,
+        date: {
+          [Op.gte]: startDate
+        }
+      },
+      order: [['date', 'ASC']]
+    });
+
+    // Group by month
+    const monthlyData = {};
+
+    transactions.forEach(t => {
+      const date = new Date(t.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = {
+          month: date.toLocaleString('default', { month: 'short', year: 'numeric' }),
+          income: 0,
+          expense: 0
+        };
+      }
+
+      const amount = parseFloat(t.amount);
+      if (t.type === 'income') {
+        monthlyData[monthKey].income += amount;
+      } else {
+        monthlyData[monthKey].expense += amount;
+      }
+    });
+
+    const trends = Object.values(monthlyData).map(item => ({
+      month: item.month,
+      income: parseFloat(item.income.toFixed(2)),
+      expense: parseFloat(item.expense.toFixed(2)),
+      net: parseFloat((item.income - item.expense).toFixed(2))
+    }));
+
+    res.status(200).json({
+      trends
+    });
+  } catch (error) {
+    console.error('Error fetching trends:', error);
+    res.status(500).json({
+      message: 'Failed to fetch trends',
+      error: error.message
+    });
+  }
+};
+
+// Get transactions grouped by date for calendar
+exports.getTransactionsByMonth = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { year, month } = req.query;
+
+    if (!year || !month) {
+      return res.status(400).json({
+        message: 'Year and month are required'
+      });
+    }
+
+    const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+    const endDate = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59);
+
+    const transactions = await Transaction.findAll({
+      where: {
+        userId,
+        date: {
+          [Op.between]: [startDate, endDate]
+        }
+      },
+      order: [['date', 'ASC'], ['createdAt', 'ASC']]
+    });
+
+    // Group by day
+    const dailyTransactions = {};
+
+    transactions.forEach(t => {
+      const date = new Date(t.date);
+      const day = date.getDate();
+
+      if (!dailyTransactions[day]) {
+        dailyTransactions[day] = [];
+      }
+
+      dailyTransactions[day].push({
+        id: t.id,
+        description: t.remarks || t.category,
+        category: t.category,
+        amount: parseFloat(t.amount),
+        type: t.type,
+        time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      });
+    });
+
+    res.status(200).json({
+      transactions: dailyTransactions
+    });
+  } catch (error) {
+    console.error('Error fetching calendar transactions:', error);
+    res.status(500).json({
+      message: 'Failed to fetch calendar transactions',
+      error: error.message
+    });
+  }
+};
