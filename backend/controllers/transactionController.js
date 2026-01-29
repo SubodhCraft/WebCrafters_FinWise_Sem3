@@ -254,3 +254,64 @@ exports.getTransactionsByDateRange = async (req, res) => {
     });
   }
 };
+// Get analytics by category
+exports.getAnalyticsByCategory = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { startDate, endDate } = req.query;
+
+    const whereClause = { userId };
+
+    if (startDate && endDate) {
+      whereClause.date = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    }
+
+    const transactions = await Transaction.findAll({
+      where: whereClause,
+      attributes: ['type', 'category', 'amount']
+    });
+
+    // Group by type and category
+    const analytics = {
+      income: {},
+      expense: {}
+    };
+
+    transactions.forEach(t => {
+      const type = t.type;
+      const category = t.category;
+      const amount = parseFloat(t.amount);
+
+      if (!analytics[type][category]) {
+        analytics[type][category] = 0;
+      }
+      analytics[type][category] += amount;
+    });
+
+    // Convert to array format for charts
+    const incomeData = Object.entries(analytics.income).map(([name, value]) => ({
+      name,
+      value: parseFloat(value.toFixed(2))
+    }));
+
+    const expenseData = Object.entries(analytics.expense).map(([name, value]) => ({
+      name,
+      value: parseFloat(value.toFixed(2))
+    }));
+
+    res.status(200).json({
+      income: incomeData,
+      expense: expenseData,
+      totalIncome: incomeData.reduce((sum, item) => sum + item.value, 0),
+      totalExpense: expenseData.reduce((sum, item) => sum + item.value, 0)
+    });
+  } catch (error) {
+    console.error('Error fetching analytics:', error);
+    res.status(500).json({
+      message: 'Failed to fetch analytics',
+      error: error.message
+    });
+  }
+};
