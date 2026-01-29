@@ -190,3 +190,33 @@ exports.updateTransaction = async (req, res) => {
     });
   }
 };
+
+// Delete transaction
+exports.deleteTransaction = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const transaction = await Transaction.findOne({
+      where: { id, userId }
+    });
+
+    if (!transaction) {
+      return res.status(404).json({
+        message: 'Transaction not found'
+      });
+    }
+
+    await transaction.destroy();
+
+    res.status(200).json({
+      message: 'Transaction deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting transaction:', error);
+    res.status(500).json({
+      message: 'Failed to delete transaction',
+      error: error.message
+    });
+  }
+};
