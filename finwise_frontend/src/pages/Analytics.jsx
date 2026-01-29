@@ -68,6 +68,133 @@ const Analytics = () => {
     }
   };
 
+  const exportToPDF = async () => {
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      doc.setFontSize(22);
+      doc.setTextColor(79, 70, 229);
+      doc.text('FinWise - Financial Analytics Report', pageWidth / 2, 20, { align: 'center' });
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Report Period: ${dateRange.startDate} to ${dateRange.endDate}`, pageWidth / 2, 28, { align: 'center' });
+
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      doc.text('Financial Summary', 14, 40);
+
+      const summaryData = [
+        ['Total Income', `NRS ${(stats.income || 0).toFixed(2)}`],
+        ['Total Expenses', `NRS ${(stats.expenses || 0).toFixed(2)}`],
+        ['Net Balance', `NRS ${(stats.balance || 0).toFixed(2)}`],
+        ['Savings Rate', `${(stats.income || 0) > 0 ? (((stats.balance || 0) / (stats.income || 1)) * 100).toFixed(1) : 0}%`]
+      ];
+
+      autoTable(doc, {
+        startY: 45,
+        head: [['Metric', 'Value']],
+        body: summaryData,
+        theme: 'grid',
+        headStyles: { fillColor: [79, 70, 229] },
+        margin: { left: 14, right: 14 }
+      });
+
+      if (categoryData.income.length > 0) {
+        const currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : 120;
+        doc.setFontSize(14);
+        doc.text('Income by Category', 14, currentY);
+
+        const incomeTableData = categoryData.income.map(item => [
+          item.name,
+          `NRS ${(item.value || 0).toFixed(2)}`,
+          `${(((item.value || 0) / (stats.income || 1)) * 100).toFixed(1)}%`
+        ]);
+
+        autoTable(doc, {
+          startY: currentY + 5,
+          head: [['Category', 'Amount', 'Percentage']],
+          body: incomeTableData,
+          theme: 'striped',
+          headStyles: { fillColor: [16, 185, 129] },
+          margin: { left: 14, right: 14 }
+        });
+      }
+
+      if (categoryData.expense.length > 0) {
+        doc.addPage();
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Expenses by Category', 14, 20);
+
+        const expenseTableData = categoryData.expense.map(item => [
+          item.name,
+          `NRS ${(item.value || 0).toFixed(2)}`,
+          `${(((item.value || 0) / (stats.expenses || 1)) * 100).toFixed(1)}%`
+        ]);
+
+        autoTable(doc, {
+          startY: 25,
+          head: [['Category', 'Amount', 'Percentage']],
+          body: expenseTableData,
+          theme: 'striped',
+          headStyles: { fillColor: [239, 68, 68] },
+          margin: { left: 14, right: 14 }
+        });
+      }
+
+      if (trendsData.length > 0) {
+        const nextY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : 20;
+        if (nextY > 240) {
+          doc.addPage();
+          doc.setFontSize(14);
+          doc.text('Monthly Trends', 14, 20);
+          var startYTrend = 25;
+        } else {
+          doc.setFontSize(14);
+          doc.text('Monthly Trends', 14, nextY);
+          var startYTrend = nextY + 5;
+        }
+
+        const trendsTableData = trendsData.map(item => [
+          item.month,
+          `NRS ${(item.income || 0).toFixed(2)}`,
+          `NRS ${(item.expense || 0).toFixed(2)}`,
+          `NRS ${(item.net || 0).toFixed(2)}`
+        ]);
+
+        autoTable(doc, {
+          startY: startYTrend,
+          head: [['Month', 'Income', 'Expenses', 'Net']],
+          body: trendsTableData,
+          theme: 'grid',
+          headStyles: { fillColor: [79, 70, 229] },
+          margin: { left: 14, right: 14 }
+        });
+      }
+
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text(
+          `Generated on ${new Date().toLocaleDateString()} | Page ${i} of ${pageCount}`,
+          pageWidth / 2,
+          doc.internal.pageSize.getHeight() - 10,
+          { align: 'center' }
+        );
+      }
+
+      doc.save(`FinWise_Analytics_${dateRange.startDate}_to_${dateRange.endDate}.pdf`);
+      toast.success('PDF exported successfully!');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast.error('Failed to export PDF');
+    }
+  };
+  
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
