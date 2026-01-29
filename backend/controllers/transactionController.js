@@ -220,3 +220,37 @@ exports.deleteTransaction = async (req, res) => {
     });
   }
 };
+
+// Get transactions by date range
+exports.getTransactionsByDateRange = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        message: 'Start date and end date are required'
+      });
+    }
+
+    const transactions = await Transaction.findAll({
+      where: {
+        userId,
+        date: {
+          [Op.between]: [new Date(startDate), new Date(endDate)]
+        }
+      },
+      order: [['date', 'DESC']]
+    });
+
+    res.status(200).json({
+      transactions
+    });
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    res.status(500).json({
+      message: 'Failed to fetch transactions',
+      error: error.message
+    });
+  }
+};
