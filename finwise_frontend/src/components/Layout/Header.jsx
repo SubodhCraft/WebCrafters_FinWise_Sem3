@@ -103,7 +103,7 @@ const Header = ({ title = 'Dashboard', userName = 'John Doe' }) => {
         {/* Left Section - Title & Search */}
         <div className="flex items-center space-x-6 flex-1">
           <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
-          
+
           <div className="relative max-w-md w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
