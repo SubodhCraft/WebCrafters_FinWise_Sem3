@@ -86,3 +86,62 @@ exports.getAllSelfNotes = async (req, res) => {
     });
   }
 };
+
+// Get recent self notes (last 10)
+exports.getRecentSelfNotes = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const notes = await SelfNote.findAll({
+      where: { userId },
+      order: [
+        ['isPinned', 'DESC'],
+        ['createdAt', 'DESC']
+      ],
+      limit: 10
+    });
+
+    res.status(200).json({
+      success: true,
+      notes
+    });
+  } catch (error) {
+    console.error('Error fetching recent self notes:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch recent self notes',
+      error: error.message 
+    });
+  }
+};
+
+// Get single self note by ID
+exports.getSelfNoteById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const note = await SelfNote.findOne({
+      where: { id, userId }
+    });
+
+    if (!note) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Self note not found' 
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      note
+    });
+  } catch (error) {
+    console.error('Error fetching self note:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch self note',
+      error: error.message 
+    });
+  }
+};
