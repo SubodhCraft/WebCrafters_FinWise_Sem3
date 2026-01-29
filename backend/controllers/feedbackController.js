@@ -56,3 +56,27 @@ exports.getAllFeedbacks = async (req, res) => {
         });
     }
 };
+
+// Resolve feedback (Admin only)
+exports.resolveFeedback = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const feedback = await Feedback.findByPk(id);
+
+        if (!feedback) {
+            return res.status(404).json({ success: false, message: "Feedback not found" });
+        }
+
+        feedback.isResolved = !feedback.isResolved;
+        await feedback.save();
+
+        res.status(200).json({
+            success: true,
+            message: `Feedback marked as ${feedback.isResolved ? 'resolved' : 'unresolved'}`,
+            data: feedback
+        });
+    } catch (error) {
+        console.error("Resolve feedback error:", error);
+        res.status(500).json({ success: false, message: "Failed to update feedback status" });
+    }
+};
