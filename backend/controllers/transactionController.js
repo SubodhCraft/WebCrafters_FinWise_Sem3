@@ -1,7 +1,3 @@
-// controllers/transactionController.js
-const Transaction = require('../models/Transaction');
-const { Op } = require('sequelize');
-
 // Create new transaction
 // [INTEGRATED TESTING NODE]
 // Handles 'Capital Log Creation' (TEST 06 in api.test.js).
