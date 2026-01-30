@@ -1,187 +1,160 @@
-// import React from 'react'
-// import { LayoutDashboard, FileText, Calendar, Zap, File, Settings, LogOut } from 'lucide-react'; 
-// import FinwiseLogo from "../../assets/logo-finwise.png"; 
-
-// const menuItems = [
-//   { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" }, 
-//   { id: "notes", icon: FileText, label: "Notes" },
-//   { id: "calendar", icon: Calendar, label: "Calendar" },
-//   { id: "goals", icon: Zap, label: "Goals" }, 
-//   { id: "statement", icon: File, label: "Statement" },
-// ];
-
-
-// function Sidebar({ collapsed, onToggle, currentPage, onPageChange }) {
-  
-//   return (
-//     <div className={`${collapsed ? "w-20" : "w-60"} transition duration-300 ease-in-out bg-white border-r border-gray-100 flex flex-col relative z-10 `}>
-      
-//       {/* Logo */}
-//       <div className="p-4 border-b border-gray-100"> 
-//         <div className='flex items-center space-x-3 bg-[#EAEEFF] p-2 rounded-xl border border-gray-100 shadow-sm'> 
-          
-//           <img
-//             src={FinwiseLogo} 
-//             alt="FINWISE Logo"
-//             className="w-8 h-8 object-contain"
-//           />
-          
-//           {!collapsed && (
-//             <div>
-//               <h1 className='text-xl font-bold text-violet-600'>
-//                 FINWISE
-//               </h1>
-//             </div>
-//           )}
-//         </div>
-//       </div>
-
-//       {/* Navigation */}
-//       <nav className='flex-1 p-4 space-y-2 overflow-y-auto'>
-//         {menuItems.map((item) => {
-//           const isActive = currentPage === item.id; 
-          
-//           return (
-//             <div key={item.id}>
-//               <button
-                
-//                 className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 
-//                   ${collapsed ? 'justify-center' : 'justify-start'}
-//                   ${isActive 
-//                   ? "bg-indigo-50 text-violet-600 font-semibold" 
-//                   : "text-gray-600 hover:bg-gray-50" }`}
-//                 onClick={() => onPageChange(item.id)}
-//               >
-//                 <item.icon className={`w-5 h-5 ${isActive ? "" : "text-gray-400"}`} />
-                
-//                 {!collapsed && (
-//                   <span className="font-medium ml-2">{item.label}</span>
-//                 )}
-//               </button>
-//             </div>
-//           );
-//         })}
-//       </nav>
-
-//       {/* Settings and Logout */}
-//       <div className='p-4 border-t border-gray-100 space-y-2'>
-//         {/* Settings */}
-//         <button 
-//           className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 
-//             ${collapsed ? 'justify-center' : 'justify-start'}
-//             ${currentPage === 'settings' 
-//             ? "bg-indigo-50 text-violet-600 font-semibold" 
-//             : "text-gray-600 hover:bg-gray-50"}`} 
-//           onClick={() => onPageChange("settings")}
-//         >
-//           <Settings className={`w-5 h-5 ${currentPage === 'settings' ? "" : "text-gray-400"}`} />
-//           {!collapsed && <span className="font-medium ml-2">Settings</span>}
-//         </button>
-
-//         {/* Logout */}
-//         <button 
-//           className={`w-full flex items-center p-3 rounded-xl transition-all duration-200 
-//             ${collapsed ? 'justify-center' : 'justify-start'}
-//             text-gray-600 hover:bg-gray-50`} 
-//           onClick={() => onPageChange("logout")}
-//         >
-//           <LogOut className={`w-5 h-5 text-gray-400`} />
-//           {!collapsed && <span className="font-medium ml-2">Logout</span>}
-//         </button>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default Sidebar
-
-
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, StickyNote, Calendar, Target, PieChart, Settings, LogOut, ChevronRight, Wallet, Shield } from 'lucide-react';
+import {
+  LayoutDashboard,
+  StickyNote,
+  Calendar,
+  Target,
+  PieChart,
+  Settings,
+  LogOut,
+  Shield,
+  ChevronRight,
+  User,
+  HelpCircle,
+  Bell,
+  Heart
+} from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
+import logo from '../../assets/logo-finwise.png';
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const { isDarkMode: darkMode } = useTheme();
+
+  const userString = localStorage.getItem('user');
+  const user = userString ? JSON.parse(userString) : {};
   const isAdmin = user.role === 'admin';
 
   const handleLogout = () => {
-    // Remove token and userId
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     localStorage.removeItem('user');
     navigate('/LoginPage');
   };
 
-  const menuItems = [
-    { id: 'dashboard', path: '/dashboard', icon: Home, label: 'Dashboard' },
-    { id: 'notes', path: '/selfnotes', icon: StickyNote, label: 'Notes' },
-    { id: 'calendar', path: '/calendar', icon: Calendar, label: 'Calendar' },
-    { id: 'goals', path: '/goals', icon: Target, label: 'Goals' },
-    { id: 'analytics', path: '/analytics', icon: PieChart, label: 'Analytics' },
-    { id: 'settings', path: '/settings', icon: Settings, label: 'Settings' },
+  const navGroups = [
+    {
+      title: 'Main Menu',
+      items: [
+        { id: 'dashboard', path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        { id: 'analytics', path: '/analytics', icon: PieChart, label: 'Analytics' },
+      ]
+    },
+    {
+      title: 'Management',
+      items: [
+        { id: 'notes', path: '/selfnotes', icon: StickyNote, label: 'Self Notes' },
+        { id: 'calendar', path: '/calendar', icon: Calendar, label: 'Calendar' },
+        { id: 'goals', path: '/goals', icon: Target, label: 'Goals' },
+      ]
+    },
+    {
+      title: 'Preferences',
+      items: [
+        { id: 'settings', path: '/settings', icon: Settings, label: 'Settings' },
+      ]
+    }
   ];
 
   if (isAdmin) {
-    menuItems.push({ id: 'admin', path: '/admin', icon: Shield, label: 'Admin Panel' });
+    navGroups.push({
+      title: 'Administration',
+      items: [
+        { id: 'admin', path: '/admin', icon: Shield, label: 'Admin Panel' }
+      ]
+    });
   }
 
-  const handleNavigation = (path) => {
-    navigate(path);
-  };
-
   return (
-    <div className="w-64 bg-gradient-to-b from-indigo-600 to-indigo-800 text-white h-screen fixed left-0 top-0 flex flex-col shadow-xl">
-      {/* Logo Section */}
-      <div className="p-6 border-b border-indigo-500">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-            <Wallet className="w-6 h-6 text-indigo-600" />
+    <aside className={`w-72 h-screen fixed left-0 top-0 flex flex-col transition-all duration-500 z-[100] border-r ${darkMode ? 'bg-slate-950 border-white/5 text-slate-100' : 'bg-white border-slate-100 text-slate-900 shadow-xl shadow-slate-200/20'}`}>
+
+      {/* Sweet & Professional Brand Identity */}
+      <div className="p-8 pb-8">
+        <div
+          className="flex items-center gap-4 cursor-pointer group"
+          onClick={() => navigate('/dashboard')}
+        >
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110">
+            <img src={logo} alt="FinWise" className="w-full h-full object-contain" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">FinWise</h1>
-            <p className="text-xs text-indigo-200">Manage Your Finances</p>
+            <h1 className="text-2xl font-bold tracking-tight leading-none">
+              Fin<span className="text-indigo-600">Wise</span>
+            </h1>
+            <p className="text-[10px] font-semibold text-slate-400 mt-1 uppercase tracking-widest">Your Wealth Partner</p>
           </div>
         </div>
       </div>
 
-      {/* Navigation Menu */}
-      <nav className="flex-1 px-3 py-6 space-y-1">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
+      {/* Elegant Navigation Matrix */}
+      <nav className="flex-1 px-6 space-y-8 overflow-y-auto custom-scrollbar pb-8">
+        {navGroups.map((group, groupIdx) => (
+          <div key={groupIdx} className="space-y-2">
+            <h3 className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+              {group.title}
+            </h3>
 
-          return (
-            <button
-              key={item.id}
-              onClick={() => handleNavigation(item.path)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group ${isActive
-                  ? 'bg-white text-indigo-600 shadow-lg'
-                  : 'text-indigo-100 hover:bg-indigo-700 hover:text-white'
-                }`}
-            >
-              <div className="flex items-center space-x-3">
-                <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : 'text-indigo-200'}`} />
-                <span className="font-medium">{item.label}</span>
-              </div>
-              {isActive && <ChevronRight className="w-4 h-4" />}
-            </button>
-          );
-        })}
+            <div className="space-y-1">
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => navigate(item.path)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group relative ${isActive
+                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+                      : `text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 ${darkMode ? 'hover:bg-white/5' : 'hover:bg-indigo-50/50'}`
+                      }`}
+                  >
+                    <div className="flex items-center gap-4 relative z-10 w-full">
+                      <Icon size={18} className={`${isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600 transition-colors'}`} />
+                      <span className="font-semibold text-sm tracking-tight">{item.label}</span>
+                    </div>
+
+                    {isActive && (
+                      <div className="opacity-50">
+                        <ChevronRight size={14} />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
-      {/* Logout Section */}
-      <div className="p-4 border-t border-indigo-500">
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-indigo-100 hover:bg-indigo-700 hover:text-white transition-all duration-200"
-        >
-          <LogOut className="w-5 h-5" />
-          <span className="font-medium">Logout</span>
-        </button>
+
+      {/* Friendly Profile Section */}
+      <div className="p-6 pt-0">
+        <div className={`p-4 rounded-[2rem] border transition-all duration-500 ${darkMode ? 'bg-slate-900 border-white/5' : 'bg-white border-slate-100 shadow-sm'}`}>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-11 h-11 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+              {user.fullName?.charAt(0) || user.username?.charAt(0) || 'U'}
+            </div>
+            <div className="overflow-hidden flex-1">
+              <p className="font-bold text-xs truncate leading-none mb-1">{user.fullName || user.username || 'User'}</p>
+              <p className="text-[9px] font-medium text-slate-400 truncate">{user.email || 'Premium Member'}</p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 text-[10px] font-bold uppercase tracking-widest ${darkMode
+              ? 'bg-white/5 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10'
+              : 'bg-slate-50 text-slate-400 hover:text-rose-500 hover:bg-rose-50'
+              }`}
+          >
+            <LogOut size={14} />
+            Sign Out
+          </button>
+        </div>
       </div>
-    </div>
+    </aside>
   );
 };
 
