@@ -32,7 +32,12 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/security", securityQuestionRoutes);
-  // Fixed: removed trailing slash and require()
+app.use("/api/transactions", require("./routes/transactionRoutes"));
+app.use("/api/feedback", require("./routes/feedbackRoutes"));
+app.use("/api/goals", require("./routes/goalRoutes"));
+app.use("/api/categories", require("./routes/categoryRoutes"));
+app.use("/api/notes", require("./routes/selfNoteRoutes"));
+app.use("/api/admin", require("./routes/adminRoutes"));
 
 // Health check endpoint
 app.get("/", (req, res) => {
@@ -45,10 +50,10 @@ const startServer = async () => {
     await connectDB();
     await sequelize.sync();
     console.log('Database connected and synced');
-    
+
     // CRITICAL FIX #2: Changed port from 3000 to 5000
     const PORT = process.env.PORT || 5000;
-    
+
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
       console.log(`Register endpoint: http://localhost:${PORT}/api/auth/register`);

@@ -1,0 +1,448 @@
+// controllers/transactionController.js
+const Transaction = require('../models/Transaction');
+const { Op } = require('sequelize');
+
+// Create new transaction
+// [INTEGRATED TESTING NODE]
+// Handles 'Capital Log Creation' (TEST 06 in api.test.js).
+// Ensures financial ledger integrity.
+exports.createTransaction = async (req, res) => {
+  try {
+    const { type, category, amount, remarks, date } = req.body;
+    const userId = req.user.id; // From auth middleware
+
+    // Validate required fields
+    if (!type || !category || !amount || !date) {
+      return res.status(400).json({
+        message: 'Type, category, amount, and date are required'
+      });
+    }
+
+    // Validate transaction type
+    if (!['income', 'expense'].includes(type)) {
+      return res.status(400).json({
+        message: 'Type must be either income or expense'
+      });
+    }
+
+    // Create transaction
+    const transaction = await Transaction.create({
+      userId,
+      type,
+      category,
+      amount: parseFloat(amount),
+      remarks: remarks || null,
+      date: new Date(date)
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Transaction created successfully',
+      transaction
+    });
+  } catch (error) {
+    console.error('Error creating transaction:', error);
+    res.status(500).json({
+      message: 'Failed to create transaction',
+      error: error.message
+    });
+  }
+};
+
+// Get recent transactions (last 10)
+exports.getRecentTransactions = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const transactions = await Transaction.findAll({
+      where: { userId },
+      order: [['date', 'DESC'], ['createdAt', 'DESC']],
+      limit: 10
+    });
+
+    res.status(200).json({
+      success: true,
+      transactions
+    });
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    res.status(500).json({
+      message: 'Failed to fetch transactions',
+      error: error.message
+    });
+  }
+};
+
+// Get all transactions with pagination and filters
+exports.getAllTransactions = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const {
+      page = 1,
+      limit = 20,
+      type,
+      category,
+      startDate,
+      endDate
+    } = req.query;
+
+    const offset = (page - 1) * limit;
+
+    // Build where clause
+    const whereClause = { userId };
+
+    if (type) whereClause.type = type;
+    if (category) whereClause.category = category;
+
+    if (startDate || endDate) {
+      whereClause.date = {};
+      if (startDate) whereClause.date[Op.gte] = new Date(startDate);
+      if (endDate) whereClause.date[Op.lte] = new Date(endDate);
+    }
+
+    const { count, rows } = await Transaction.findAndCountAll({
+      where: whereClause,
+      order: [['date', 'DESC'], ['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+
+    res.status(200).json({
+      success: true,
+      transactions: rows,
+      pagination: {
+        total: count,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(count / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    res.status(500).json({
+      message: 'Failed to fetch transactions',
+      error: error.message
+    });
+  }
+};
+
+// Get transaction statistics
+exports.getTransactionStats = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get total income
+    const totalIncome = await Transaction.sum('amount', {
+      where: { userId, type: 'income' }
+    }) || 0;
+
+    // Get total expenses
+    const totalExpenses = await Transaction.sum('amount', {
+      where: { userId, type: 'expense' }
+    }) || 0;
+
+    // Calculate balance
+    const balance = totalIncome - totalExpenses;
+
+    res.status(200).json({
+      success: true,
+      balance: parseFloat(balance.toFixed(2)),
+      income: parseFloat(totalIncome.toFixed(2)),
+      expenses: parseFloat(totalExpenses.toFixed(2))
+    });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({
+      message: 'Failed to fetch statistics',
+      error: error.message
+    });
+  }
+};
+
+// Update transaction
+exports.updateTransaction = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const { type, category, amount, remarks, date } = req.body;
+
+    const transaction = await Transaction.findOne({
+      where: { id, userId }
+    });
+
+    if (!transaction) {
+      return res.status(404).json({
+        message: 'Transaction not found'
+      });
+    }
+
+    await transaction.update({
+      type: type || transaction.type,
+      category: category || transaction.category,
+      amount: amount ? parseFloat(amount) : transaction.amount,
+      remarks: remarks !== undefined ? remarks : transaction.remarks,
+      date: date ? new Date(date) : transaction.date
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Transaction updated successfully',
+      transaction
+    });
+  } catch (error) {
+    console.error('Error updating transaction:', error);
+    res.status(500).json({
+      message: 'Failed to update transaction',
+      error: error.message
+    });
+  }
+};
+
+// Delete transaction
+// [INTEGRATED TESTING NODE]
+// Handles 'Strategic Resource Purge' (TEST 09 in api.test.js).
+// Verifies error handling for non-existent financial entities.
+exports.deleteTransaction = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const transaction = await Transaction.findOne({
+      where: { id, userId }
+    });
+
+    if (!transaction) {
+      return res.status(404).json({
+        message: 'Transaction not found'
+      });
+    }
+
+    await transaction.destroy();
+
+    res.status(200).json({
+      success: true,
+      message: 'Transaction deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting transaction:', error);
+    res.status(500).json({
+      message: 'Failed to delete transaction',
+      error: error.message
+    });
+  }
+};
+
+// Get transactions by date range
+exports.getTransactionsByDateRange = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        message: 'Start date and end date are required'
+      });
+    }
+
+    const transactions = await Transaction.findAll({
+      where: {
+        userId,
+        date: {
+          [Op.between]: [new Date(startDate), new Date(endDate)]
+        }
+      },
+      order: [['date', 'DESC']]
+    });
+
+    res.status(200).json({
+      transactions
+    });
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    res.status(500).json({
+      message: 'Failed to fetch transactions',
+      error: error.message
+    });
+  }
+};
+
+// Get analytics by category
+exports.getAnalyticsByCategory = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { startDate, endDate } = req.query;
+
+    const whereClause = { userId };
+
+    if (startDate && endDate) {
+      whereClause.date = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    }
+
+    const transactions = await Transaction.findAll({
+      where: whereClause,
+      attributes: ['type', 'category', 'amount']
+    });
+
+    // Group by type and category
+    const analytics = {
+      income: {},
+      expense: {}
+    };
+
+    transactions.forEach(t => {
+      const type = t.type;
+      const category = t.category;
+      const amount = parseFloat(t.amount);
+
+      if (!analytics[type][category]) {
+        analytics[type][category] = 0;
+      }
+      analytics[type][category] += amount;
+    });
+
+    // Convert to array format for charts
+    const incomeData = Object.entries(analytics.income).map(([name, value]) => ({
+      name,
+      value: parseFloat(value.toFixed(2))
+    }));
+
+    const expenseData = Object.entries(analytics.expense).map(([name, value]) => ({
+      name,
+      value: parseFloat(value.toFixed(2))
+    }));
+
+    res.status(200).json({
+      income: incomeData,
+      expense: expenseData,
+      totalIncome: incomeData.reduce((sum, item) => sum + item.value, 0),
+      totalExpense: expenseData.reduce((sum, item) => sum + item.value, 0)
+    });
+  } catch (error) {
+    console.error('Error fetching analytics:', error);
+    res.status(500).json({
+      message: 'Failed to fetch analytics',
+      error: error.message
+    });
+  }
+};
+
+// Get monthly trends
+exports.getMonthlyTrends = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { months = 6 } = req.query;
+
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - parseInt(months));
+
+    const transactions = await Transaction.findAll({
+      where: {
+        userId,
+        date: {
+          [Op.gte]: startDate
+        }
+      },
+      order: [['date', 'ASC']]
+    });
+
+    // Group by month
+    const monthlyData = {};
+
+    transactions.forEach(t => {
+      const date = new Date(t.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = {
+          month: date.toLocaleString('default', { month: 'short', year: 'numeric' }),
+          income: 0,
+          expense: 0
+        };
+      }
+
+      const amount = parseFloat(t.amount);
+      if (t.type === 'income') {
+        monthlyData[monthKey].income += amount;
+      } else {
+        monthlyData[monthKey].expense += amount;
+      }
+    });
+
+    const trends = Object.values(monthlyData).map(item => ({
+      month: item.month,
+      income: parseFloat(item.income.toFixed(2)),
+      expense: parseFloat(item.expense.toFixed(2)),
+      net: parseFloat((item.income - item.expense).toFixed(2))
+    }));
+
+    res.status(200).json({
+      trends
+    });
+  } catch (error) {
+    console.error('Error fetching trends:', error);
+    res.status(500).json({
+      message: 'Failed to fetch trends',
+      error: error.message
+    });
+  }
+};
+
+// Get transactions grouped by date for calendar
+exports.getTransactionsByMonth = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { year, month } = req.query;
+
+    if (!year || !month) {
+      return res.status(400).json({
+        message: 'Year and month are required'
+      });
+    }
+
+    const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+    const endDate = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59);
+
+    const transactions = await Transaction.findAll({
+      where: {
+        userId,
+        date: {
+          [Op.between]: [startDate, endDate]
+        }
+      },
+      order: [['date', 'ASC'], ['createdAt', 'ASC']]
+    });
+
+    // Group by day
+    const dailyTransactions = {};
+
+    transactions.forEach(t => {
+      const date = new Date(t.date);
+      const day = date.getDate();
+
+      if (!dailyTransactions[day]) {
+        dailyTransactions[day] = [];
+      }
+
+      dailyTransactions[day].push({
+        id: t.id,
+        description: t.remarks || t.category,
+        category: t.category,
+        amount: parseFloat(t.amount),
+        type: t.type,
+        time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      });
+    });
+
+    res.status(200).json({
+      transactions: dailyTransactions
+    });
+  } catch (error) {
+    console.error('Error fetching calendar transactions:', error);
+    res.status(500).json({
+      message: 'Failed to fetch calendar transactions',
+      error: error.message
+    });
+  }
+};

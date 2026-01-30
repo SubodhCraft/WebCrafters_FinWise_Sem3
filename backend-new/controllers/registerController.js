@@ -1,0 +1,84 @@
+const User = require("../models/userModel.js");
+const bcrypt = require("bcrypt");
+
+// [INTEGRATED TESTING NODE]
+// This controller handles the 'User Registration Handshake' (TEST 01 & TEST 02 in api.test.js).
+// It ensures that unique financial identities are established securely.
+const register = async (req, res) => {
+    try {
+        let { username, email, password } = req.body;
+
+        if (!username || !email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "All fields are required"
+            });
+        }
+
+        email = email.toLowerCase().trim();
+
+        const isUser = await User.findOne({
+            where: { username }
+        });
+        if (isUser) {
+            return res.status(400).json({
+                success: false,
+                message: "Username already exists"
+            });
+        }
+
+        const isEmail = await User.findOne({ where: { email } });
+        if (isEmail) {
+            return res.status(400).json({
+                success: false,
+                message: "Email already exists"
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        // let hashedAnswer1 = null;
+        // let hashedAnswer2 = null;
+        // let hashedAnswer3 = null;
+
+        // if (securityAnswer1) {
+        //     hashedAnswer1 = await bcrypt.hash(securityAnswer1, 10);
+        // }
+
+        // if (securityAnswer2) {
+        // hashedAnswer2 = await bcrypt.hash(securityAnswer2, 10);
+        // }
+        // if (securityAnswer3) {
+        //     hashedAnswer3 = await bcrypt.hash(securityAnswer3, 10);
+        // }
+        const newUser = await User.create({
+            username,
+            email,
+            password: hashedPassword,
+            role: "user",
+
+            // securityQuestion1: securityQuestion1 || null,
+            // securityAnswer1: hashedAnswer1,
+            // securityQuestion2: securityQuestion2 || null,
+            // securityAnswer2: hashedAnswer2,
+            // securityQuestion3: securityQuestion3 || null,
+            // securityAnswer3: hashedAnswer3,
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "User registered successfully",
+            userId: newUser.id,
+        });
+
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Error registering user",
+            error: error.message,
+        });
+    }
+};
+
+module.exports = { register };
