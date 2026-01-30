@@ -5,27 +5,13 @@ const { Op } = require("sequelize");
 // Get all categories (grouped by type)
 exports.getAllCategories = async (req, res) => {
   try {
-    const userId = req.user?.id || null;
-
     const incomeCategories = await Category.findAll({
-      where: {
-        type: 'income',
-        [Op.or]: [
-          { createdBy: null },     // default categories
-          { createdBy: userId }    // user-created categories
-        ]
-      },
+      where: { type: 'income' },
       order: [['name', 'ASC']]
     });
 
     const expenseCategories = await Category.findAll({
-      where: {
-        type: 'expense',
-        [Op.or]: [
-          { createdBy: null },
-          { createdBy: userId }
-        ]
-      },
+      where: { type: 'expense' },
       order: [['name', 'ASC']]
     });
 
@@ -35,9 +21,9 @@ exports.getAllCategories = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching categories:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Failed to fetch categories',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -47,19 +33,22 @@ exports.getAllCategories = async (req, res) => {
 exports.createCategory = async (req, res) => {
   try {
     const { name, type } = req.body;
-    const createdBy = req.user.id;
+
+    // If the user is an admin, the category is global (createdBy: null)
+    // Otherwise, it belongs to the user (though current routes restrict this to admins)
+    const createdBy = req.user.role === 'admin' ? null : req.user.id;
 
     // Validate required fields
     if (!name || !type) {
-      return res.status(400).json({ 
-        message: 'Name and type are required' 
+      return res.status(400).json({
+        message: 'Name and type are required'
       });
     }
 
     // Validate type
     if (!['income', 'expense'].includes(type)) {
-      return res.status(400).json({ 
-        message: 'Type must be either income or expense' 
+      return res.status(400).json({
+        message: 'Type must be either income or expense'
       });
     }
 
@@ -69,8 +58,8 @@ exports.createCategory = async (req, res) => {
     });
 
     if (existingCategory) {
-      return res.status(400).json({ 
-        message: 'Category already exists' 
+      return res.status(400).json({
+        message: 'Category already exists'
       });
     }
 
@@ -86,67 +75,9 @@ exports.createCategory = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating category:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Failed to create category',
-      error: error.message 
-    });
-  }
-};
-// Update category (Admin only)
-exports.updateCategory = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, type } = req.body;
-
-    const category = await Category.findByPk(id);
-
-    if (!category) {
-      return res.status(404).json({ 
-        message: 'Category not found' 
-      });
-    }
-
-    await category.update({
-      name: name || category.name,
-      type: type || category.type
-    });
-
-    res.status(200).json({
-      message: 'Category updated successfully',
-      category
-    });
-  } catch (error) {
-    console.error('Error updating category:', error);
-    res.status(500).json({ 
-      message: 'Failed to update category',
-      error: error.message 
-    });
-  }
-};
-
-// Delete category (Admin only)
-exports.deleteCategory = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const category = await Category.findByPk(id);
-
-    if (!category) {
-      return res.status(404).json({ 
-        message: 'Category not found' 
-      });
-    }
-
-    await category.destroy();
-
-    res.status(200).json({
-      message: 'Category deleted successfully'
-    });
-  } catch (error) {
-    console.error('Error deleting category:', error);
-    res.status(500).json({ 
-      message: 'Failed to delete category',
-      error: error.message 
+      error: error.message
     });
   }
 };
