@@ -209,7 +209,6 @@ exports.updateGoalProgress = async (req, res) => {
     });
   }
 };
-
 // Delete a goal
 exports.deleteGoal = async (req, res) => {
   try {

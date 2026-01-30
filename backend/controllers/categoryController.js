@@ -85,7 +85,6 @@ exports.createCategory = async (req, res) => {
     });
   }
 };
-
 // Update category (Admin only)
 exports.updateCategory = async (req, res) => {
   try {
