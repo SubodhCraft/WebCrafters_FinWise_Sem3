@@ -1,5 +1,3 @@
-const { Feedback, User } = require("../models");
-
 // Create feedback (User only)
 // [INTEGRATED TESTING NODE]
 // Handles 'User Sentiment Log' (TEST 08 in api.test.js).
@@ -63,6 +61,7 @@ exports.getAllFeedbacks = async (req, res) => {
         });
     }
 };
+
 // Resolve feedback (Admin only)
 exports.resolveFeedback = async (req, res) => {
     try {
