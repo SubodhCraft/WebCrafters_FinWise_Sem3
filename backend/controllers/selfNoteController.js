@@ -221,7 +221,6 @@ exports.togglePinSelfNote = async (req, res) => {
     });
   }
 };
-
 // Delete self note
 exports.deleteSelfNote = async (req, res) => {
   try {
