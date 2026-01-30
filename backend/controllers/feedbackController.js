@@ -30,3 +30,30 @@ exports.createFeedback = async (req, res) => {
         });
     }
 };
+
+// Get all feedbacks (Admin only)
+exports.getAllFeedbacks = async (req, res) => {
+    try {
+        const feedbacks = await Feedback.findAll({
+            include: [
+                {
+                    model: User,
+                    attributes: ["username", "email"]
+                }
+            ],
+            order: [["createdAt", "DESC"]]
+        });
+
+        res.status(200).json({
+            success: true,
+            data: feedbacks
+        });
+    } catch (error) {
+        console.error("Get feedbacks error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to fetch feedbacks",
+            error: error.message
+        });
+    }
+};
