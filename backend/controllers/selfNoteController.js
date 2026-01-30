@@ -145,3 +145,79 @@ exports.getSelfNoteById = async (req, res) => {
     });
   }
 };
+
+// Update self note
+exports.updateSelfNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const { title, description, color, isPinned } = req.body;
+
+    const note = await SelfNote.findOne({
+      where: { id, userId }
+    });
+
+    if (!note) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Self note not found' 
+      });
+    }
+
+    await note.update({
+      title: title || note.title,
+      description: description || note.description,
+      color: color || note.color,
+      isPinned: isPinned !== undefined ? isPinned : note.isPinned
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Self note updated successfully',
+      note
+    });
+  } catch (error) {
+    console.error('Error updating self note:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to update self note',
+      error: error.message 
+    });
+  }
+};
+
+// Toggle pin status
+exports.togglePinSelfNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const note = await SelfNote.findOne({
+      where: { id, userId }
+    });
+
+    if (!note) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Self note not found' 
+      });
+    }
+
+    await note.update({
+      isPinned: !note.isPinned
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Self note ${note.isPinned ? 'pinned' : 'unpinned'} successfully`,
+      note
+    });
+  } catch (error) {
+    console.error('Error toggling pin status:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to toggle pin status',
+      error: error.message 
+    });
+  }
+};
