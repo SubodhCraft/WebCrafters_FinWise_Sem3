@@ -1,10 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import Sidebar from '../components/Layout/Sidebar.jsx';
-import { Plus, X, Pin, Edit2, Trash2, Loader2, Search, StickyNote } from 'lucide-react';
+import Header from '../components/Layout/Header.jsx';
 import {
-  getUserProfileApi,
-  getRecentSelfNotesApi,
+  Plus,
+  X,
+  Pin,
+  Edit2,
+  Trash2,
+  Loader2,
+  Search,
+  Archive,
+  Filter,
+  Clock,
+  Shield,
+  CheckCircle2,
+  Calendar,
+  Layers,
+  Activity,
+  Zap,
+  BookOpen,
+  ArrowUpRight
+} from 'lucide-react';
+import { useTheme } from '../context/ThemeContext.jsx';
+import {
   getAllSelfNotesApi,
   createSelfNoteApi,
   updateSelfNoteApi,
@@ -13,56 +32,28 @@ import {
 } from '../../service/api';
 
 const SelfNotes = () => {
+  const { isDarkMode: darkMode } = useTheme();
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notesLoading, setNotesLoading] = useState(true);
   const [editingNote, setEditingNote] = useState(null);
-
-  // User data
-  const [userData, setUserData] = useState({
-    id: null,
-    username: '',
-    email: ''
-  });
-
-  // Notes data
   const [notes, setNotes] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Form state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    color: '#7B61FF'
+    color: '#6366F1'
   });
 
   const colorOptions = [
-    { name: 'Purple', value: '#7B61FF' },
-    { name: 'Blue', value: '#3B82F6' },
-    { name: 'Green', value: '#10B981' },
-    { name: 'Pink', value: '#EC4899' },
-    { name: 'Orange', value: '#F59E0B' },
-    { name: 'Red', value: '#EF4444' }
+    { name: 'Indigo', value: '#6366F1' },
+    { name: 'Violet', value: '#8B5CF6' },
+    { name: 'Emerald', value: '#10B981' },
+    { name: 'Rose', value: '#F43F5E' },
+    { name: 'Amber', value: '#F59E0B' },
+    { name: 'Cyan', value: '#06B6D4' }
   ];
-
-  const fetchUserData = async () => {
-    try {
-      const response = await getUserProfileApi();
-      if (response.data.success) {
-        const user = response.data.user;
-        setUserData({
-          id: user.id,
-          username: user.username,
-          email: user.email
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      if (!localStorage.getItem('user')) {
-        setNotesLoading(false);
-      }
-    }
-  };
 
   const fetchNotes = async () => {
     try {
@@ -80,22 +71,7 @@ const SelfNotes = () => {
   };
 
   useEffect(() => {
-    const init = async () => {
-      const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
-      if (savedUser.id) {
-        setUserData({
-          id: savedUser.id,
-          username: savedUser.username,
-          email: savedUser.email
-        });
-      }
-
-      await Promise.all([
-        fetchUserData(),
-        fetchNotes()
-      ]);
-    };
-    init();
+    fetchNotes();
   }, []);
 
   const handleOpenModal = (note = null) => {
@@ -111,7 +87,7 @@ const SelfNotes = () => {
       setFormData({
         title: '',
         description: '',
-        color: '#7B61FF'
+        color: '#6366F1'
       });
     }
     setShowModal(true);
@@ -120,75 +96,46 @@ const SelfNotes = () => {
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingNote(null);
-    setFormData({
-      title: '',
-      description: '',
-      color: '#7B61FF'
-    });
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       if (editingNote) {
-        const response = await updateSelfNoteApi(editingNote.id, formData);
-        if (response.data.success) {
-          await fetchNotes();
-          handleCloseModal();
-          toast.success('Note updated successfully!');
-        }
+        await updateSelfNoteApi(editingNote.id, formData);
+        toast.success('Note updated');
       } else {
-        const response = await createSelfNoteApi(formData);
-        if (response.data.success) {
-          await fetchNotes();
-          handleCloseModal();
-          toast.success('Note created successfully!');
-        }
+        await createSelfNoteApi(formData);
+        toast.success('Note saved');
       }
+      await fetchNotes();
+      handleCloseModal();
     } catch (error) {
-      console.error('Error saving note:', error);
-      toast.error(error.response?.data?.message || 'Failed to save note.');
+      toast.error('Failed to save note');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteNote = async (noteId) => {
-    if (!window.confirm('Are you sure you want to delete this note?')) {
-      return;
-    }
-
-    try {
-      const response = await deleteSelfNoteApi(noteId);
-      if (response.data.success) {
+  const handleDelete = async (id) => {
+    if (window.confirm('Delete this note?')) {
+      try {
+        await deleteSelfNoteApi(id);
+        toast.success('Note deleted');
         await fetchNotes();
-        toast.success('Note deleted successfully!');
+      } catch (error) {
+        toast.error('Delete failed');
       }
-    } catch (error) {
-      console.error('Error deleting note:', error);
-      toast.error('Failed to delete note.');
     }
   };
 
-  const handleTogglePin = async (noteId) => {
+  const handlePin = async (id) => {
     try {
-      const response = await togglePinSelfNoteApi(noteId);
-      if (response.data.success) {
-        await fetchNotes();
-      }
+      await togglePinSelfNoteApi(id);
+      await fetchNotes();
     } catch (error) {
-      console.error('Error toggling pin:', error);
-      toast.error('Failed to toggle pin.');
+      toast.error('Failed to pin note');
     }
   };
 
@@ -197,222 +144,237 @@ const SelfNotes = () => {
     note.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  if (!userData.id && !notesLoading) {
-    return (
-      <div className="flex bg-[#F4F7FE] min-h-screen">
-        <Sidebar />
-        <div className="flex-1 ml-64 flex items-center justify-center text-gray-500">
-          Please login to access your notes
-        </div>
-      </div>
-    );
-  }
+  const pinnedNotes = filteredNotes.filter(n => n.pinned);
+  const otherNotes = filteredNotes.filter(n => !n.pinned);
 
   return (
-    <div className="flex min-h-screen bg-[#F4F7FE]">
+    <div className={`flex min-h-screen transition-colors duration-500 ${darkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       <Sidebar />
 
-      <div className="flex-1 ml-64 p-10">
-        <div className="flex justify-between items-center mb-10">
-          <h1 className="text-4xl font-black text-[#1B2559] tracking-tight">
-            My Self Notes
-          </h1>
-        </div>
+      <div className="flex-1 ml-72 flex flex-col min-h-screen relative overflow-hidden">
+        {/* Subtle background blurs */}
+        <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-indigo-500/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
 
-        {/* Action Row */}
-        <div className="flex justify-between items-center mb-10">
-          <div className="relative w-96">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search notes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-[#7B61FF] focus:outline-none transition-colors"
-            />
+        <Header title="Self Notes" />
+
+        <main className="flex-1 p-10 space-y-10 relative z-10 mt-20 max-w-[1680px] mx-auto w-full">
+
+          {/* Executive Intelligence Header */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-slate-200 dark:border-slate-800 pb-10">
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight">Self <span className="text-indigo-600">Notes</span></h1>
+              <p className="text-slate-500 text-sm mt-1">Capture your thoughts, ideas, and reminders.</p>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className={`flex items-center gap-4 px-6 py-3.5 rounded-2xl border transition-all ${darkMode ? 'bg-slate-900/50 border-slate-800 focus-within:border-indigo-500' : 'bg-white border-slate-100 shadow-sm focus-within:border-indigo-200'}`}>
+                <Search size={16} className="text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search notes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-transparent border-none outline-none text-[13px] font-bold w-56 placeholder:text-slate-400"
+                />
+              </div>
+              <button
+                onClick={() => handleOpenModal()}
+                className="flex items-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.25rem] font-bold text-sm shadow-xl shadow-indigo-600/20 active:scale-95 transition-all"
+              >
+                <Plus size={18} />
+                Add Note
+              </button>
+            </div>
           </div>
 
-          <button
-            onClick={() => handleOpenModal()}
-            className="flex items-center bg-[#7B61FF] hover:bg-[#6a51e6] text-white px-7 py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-100/50 active:scale-95"
-          >
-            <Plus className="w-5 h-5 mr-2 stroke-[3px]" />
-            Add New Note
-          </button>
-        </div>
 
-        <main>
           {notesLoading ? (
-            <div className="flex justify-center items-center py-20">
-              <Loader2 className="w-8 h-8 text-[#7B61FF] animate-spin" />
+            <div className="py-32 flex flex-col items-center justify-center">
+              <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+              <p className="mt-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Loading Notes...</p>
             </div>
-          ) : filteredNotes.length === 0 ? (
-            <div className="text-center py-20">
-              <StickyNote className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">No notes yet</p>
-              <p className="text-gray-300 text-sm mt-2">Create your first note to get started!</p>
+          ) : notes.length === 0 ? (
+            <div className={`py-24 text-center rounded-[3rem] border-2 border-dashed transition-all flex flex-col items-center justify-center ${darkMode ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-white shadow-sm'}`}>
+              <div className={`w-24 h-24 rounded-3xl flex items-center justify-center mb-8 ${darkMode ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                <BookOpen size={48} className="text-slate-300" />
+              </div>
+              <h3 className="text-3xl font-bold mb-4">No Notes Found</h3>
+              <p className="text-slate-500 max-w-sm mx-auto text-base leading-relaxed italic">You haven't created any notes yet. Jot down your first thought!</p>
+
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredNotes.map((note) => (
-                <div
-                  key={note.id}
-                  className="bg-white rounded-[24px] p-6 shadow-sm border-2 border-white hover:border-indigo-100 transition-all relative group"
-                  style={{ borderLeftColor: note.color, borderLeftWidth: '6px' }}
-                >
-                  <button
-                    onClick={() => handleTogglePin(note.id)}
-                    className={`absolute top-4 right-4 p-2 rounded-lg transition-all ${note.isPinned
-                      ? 'bg-[#7B61FF] text-white'
-                      : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                      }`}
-                  >
-                    <Pin className="w-4 h-4" />
-                  </button>
-
-                  <div className="pr-10 mb-4">
-                    <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2">
-                      {note.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 mb-3">
-                      {formatDate(note.createdAt)}
-                    </p>
-                    <p className="text-gray-600 line-clamp-4 leading-relaxed">
-                      {note.description}
-                    </p>
+            <div className="space-y-16">
+              {pinnedNotes.length > 0 && (
+                <div className="space-y-8">
+                  <div className="flex items-center gap-4">
+                    <div className="h-[1px] flex-1 bg-slate-200 dark:bg-slate-800/50"></div>
+                    <div className="flex items-center gap-2.5 px-6 py-2 rounded-full border border-indigo-500/20 bg-indigo-500/5">
+                      <Zap size={14} className="text-amber-500 fill-amber-500/10" />
+                      <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-indigo-500">Pinned Notes</h2>
+                    </div>
+                    <div className="h-[1px] flex-1 bg-slate-200 dark:bg-slate-800/50"></div>
                   </div>
-
-                  <div className="flex space-x-2 pt-4 border-t border-gray-100">
-                    <button
-                      onClick={() => handleOpenModal(note)}
-                      className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-xl bg-[#F0EEFF] text-[#7B61FF] hover:bg-[#7B61FF] hover:text-white transition-all font-medium"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                      <span>Edit</span>
-                    </button>
-                    <button
-                      onClick={() => handleDeleteNote(note.id)}
-                      className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all font-medium"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Delete</span>
-                    </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    {pinnedNotes.map((note) => (
+                      <NoteCard key={note.id} note={note} onEdit={handleOpenModal} onDelete={handleDelete} onPin={handlePin} darkMode={darkMode} />
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
+
+              <div className="space-y-8">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-6 bg-slate-300 dark:bg-slate-800 rounded-full"></div>
+                    <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">All Notes</h2>
+                  </div>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-900 rounded-xl text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    <Filter size={12} />
+                    Category: All
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                  {otherNotes.map((note) => (
+                    <NoteCard key={note.id} note={note} onEdit={handleOpenModal} onDelete={handleDelete} onPin={handlePin} darkMode={darkMode} />
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </main>
       </div>
 
+      {/* Professional Executive Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[32px] w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between p-8 border-b border-gray-100">
-              <h2 className="text-2xl font-bold text-[#4D2DAA]">
-                {editingNote ? 'Edit Note' : 'Create New Note'}
-              </h2>
-              <button
-                onClick={handleCloseModal}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-6 h-6" />
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl flex items-center justify-center z-[500] p-4">
+          <div className={`w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in duration-500 border ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-100'}`}>
+            <div className="p-10 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/40">
+              <div className="space-y-1">
+                <h2 className="text-3xl font-bold tracking-tighter">{editingNote ? 'Edit Note' : 'Create New Note'}</h2>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-indigo-600"></div>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Self Notes Portal</p>
+                </div>
+              </div>
+              <button onClick={handleCloseModal} className="p-4 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">
+                <X size={28} className="text-slate-400" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8">
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Title <span className="text-red-500">*</span>
-                  </label>
+            <form onSubmit={handleSubmit} className="p-12 space-y-10">
+              <div className="space-y-8">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">Title</label>
                   <input
                     type="text"
-                    name="title"
+                    required
                     value={formData.title}
-                    onChange={handleInputChange}
-                    placeholder="Enter note title..."
-                    required
-                    maxLength={255}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#7B61FF] focus:outline-none transition-colors"
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className={`w-full px-6 py-5 rounded-2xl border-2 transition-all outline-none text-base font-bold ${darkMode ? 'bg-slate-900 border-slate-800 focus:border-indigo-600' : 'bg-slate-50 border-slate-100 focus:border-indigo-500 shadow-inner'}`}
+                    placeholder="Note title..."
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Description <span className="text-red-500">*</span>
-                  </label>
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">Content</label>
                   <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    placeholder="Write your note here..."
                     required
-                    rows="8"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#7B61FF] focus:outline-none transition-colors resize-none"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className={`w-full h-56 px-6 py-5 rounded-2xl border-2 transition-all outline-none text-sm font-medium resize-none leading-relaxed ${darkMode ? 'bg-slate-900 border-slate-800 focus:border-indigo-600' : 'bg-slate-50 border-slate-100 focus:border-indigo-500 shadow-inner'}`}
+                    placeholder="Type your note here..."
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-3">
-                    Note Color
-                  </label>
-                  <div className="flex space-x-3">
-                    {colorOptions.map((colorOption) => (
-                      <button
-                        key={colorOption.value}
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, color: colorOption.value }))}
-                        className={`w-12 h-12 rounded-xl transition-all ${formData.color === colorOption.value
-                          ? 'ring-4 ring-offset-2 ring-gray-400 scale-110'
-                          : 'hover:scale-105'
-                          }`}
-                        style={{ backgroundColor: colorOption.value }}
-                        title={colorOption.name}
-                      />
-                    ))}
+                <div className="space-y-4">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">Color Theme</label>
+                  <div className="flex items-center gap-6 p-6 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20">
+                    <div className="grid grid-cols-6 gap-4 flex-1">
+                      {colorOptions.map((color) => (
+                        <button
+                          key={color.value}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, color: color.value })}
+                          className={`h-10 rounded-xl transition-all flex items-center justify-center ${formData.color === color.value ? 'scale-110 shadow-lg ring-4 ring-indigo-500/20' : 'opacity-40 hover:opacity-100'}`}
+                          style={{ backgroundColor: color.value }}
+                        >
+                          {formData.color === color.value && <CheckCircle2 size={20} className="text-white" />}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="flex space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={handleCloseModal}
-                    className="flex-1 px-6 py-3 rounded-xl border-2 border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 px-6 py-3 rounded-xl bg-[#7B61FF] hover:bg-[#6a51e6] text-white font-bold transition-all shadow-lg shadow-indigo-100/50 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      editingNote ? 'Update Note' : 'Create Note'
-                    )}
-                  </button>
-                </div>
+              <div className="flex gap-6 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className={`flex-1 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all ${darkMode ? 'bg-slate-900 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-[2] py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-indigo-600/40 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                >
+                  {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : editingNote ? <><Zap size={18} /> Update Note</> : <><Plus size={18} /> Save Note</>}
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+const NoteCard = ({ note, onEdit, onDelete, onPin, darkMode }) => {
+  const dateObj = new Date(note.createdAt);
+  const formattedDate = dateObj.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+
+  return (
+    <div
+      className={`group p-6 rounded-2xl border transition-all duration-300 flex flex-col relative overflow-hidden ${darkMode ? 'bg-slate-900 border-slate-800 hover:border-indigo-500/50' : 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-600/20'}`}
+    >
+      <div className="flex justify-between items-start mb-4 relative z-10">
+        <div
+          className="w-8 h-1 rounded-full"
+          style={{ backgroundColor: note.color }}
+        ></div>
+        <button
+          onClick={() => onPin(note.id)}
+          className={`p-2 rounded-lg transition-all ${note.pinned ? 'text-indigo-600 bg-indigo-600/5' : 'text-slate-300 hover:text-indigo-500'}`}
+        >
+          <Pin size={18} fill={note.pinned ? 'currentColor' : 'none'} />
+        </button>
+      </div>
+
+      <div className="flex-1 space-y-3 relative z-10">
+        <h3 className={`text-lg font-bold leading-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>{note.title}</h3>
+        <p className={`text-sm leading-relaxed line-clamp-4 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{note.description}</p>
+      </div>
+
+      <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center relative z-10">
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          {formattedDate}
+        </span>
+        <div className="flex gap-1">
+          <button
+            onClick={() => onEdit(note)}
+            className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-800 transition-all"
+          >
+            <Edit2 size={14} />
+          </button>
+          <button
+            onClick={() => onDelete(note.id)}
+            className="p-2 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-slate-800 transition-all"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
