@@ -221,3 +221,58 @@ exports.togglePinSelfNote = async (req, res) => {
     });
   }
 };
+// Delete self note
+exports.deleteSelfNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const note = await SelfNote.findOne({
+      where: { id, userId }
+    });
+
+    if (!note) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Self note not found' 
+      });
+    }
+
+    await note.destroy();
+
+    res.status(200).json({
+      success: true,
+      message: 'Self note deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting self note:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to delete self note',
+      error: error.message 
+    });
+  }
+};
+
+// Get notes count
+exports.getSelfNotesCount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const count = await SelfNote.count({
+      where: { userId }
+    });
+
+    res.status(200).json({
+      success: true,
+      count
+    });
+  } catch (error) {
+    console.error('Error getting notes count:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to get notes count',
+      error: error.message 
+    });
+  }
+};
