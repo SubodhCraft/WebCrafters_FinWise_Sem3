@@ -6,6 +6,8 @@ import { useTheme } from '../context/ThemeContext.jsx';
 import { useCurrency } from '../context/CurrencyContext.jsx';
 import { getRecentTransactionsApi } from '../../service/api.js';
 
+// import { getRecentTransactionsApi } from '../../service/api.js';
+
 const Notifications = () => {
     const { isDarkMode: darkMode } = useTheme();
     const { currency, formatAmount, getCurrencySymbol } = useCurrency();
