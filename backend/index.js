@@ -10,7 +10,7 @@ require("dotenv").config();
 
 // MIDDLEWARE (MUST COME FIRST)
 app.use(cors({
-  origin: "http://localhost:5173", // frontend port
+  origin: "http://localhost:5174", // frontend port
   credentials: true
 }));
 
@@ -45,6 +45,7 @@ app.get("/", (req, res) => {
 });
 
 // DATABASE & START SERVER
+// DATABASE & START SERVER
 const startServer = async () => {
   try {
     await connectDB();
@@ -56,8 +57,6 @@ const startServer = async () => {
 
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
-      console.log(`Register endpoint: http://localhost:${PORT}/api/auth/register`);
-      console.log(`Login endpoint: http://localhost:${PORT}/api/auth/login`);
     });
   } catch (err) {
     console.error('Server startup failed:', err);
