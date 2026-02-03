@@ -164,8 +164,4 @@ const Notifications = () => {
     );
 };
 
-<<<<<<< HEAD
 export default Notifications;
-=======
-export default Notifications;
->>>>>>> origin/Shraddha
